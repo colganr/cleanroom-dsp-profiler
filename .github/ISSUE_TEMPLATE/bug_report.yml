@@ -1,0 +1,39 @@
+name: Bug Report
+description: Report a bug in the profiler, Rust DSP starter crate, CLI, or AI agent skill.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Clear description of the issue and expected behavior.
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Python Profiler (amp_profiler)
+        - Pure-Rust DSP Crate (dsp-core-rust)
+        - macOS AudioUnit Backend
+        - Offline WAV-Pair / Hardware Backend
+        - NAM WaveNet / Cab IR Exporter
+        - AI Agent Skill / Documentation
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS, Python & Rust Versions
+      placeholder: "e.g. macOS 15 arm64 / Ubuntu 24.04 x86_64 / Windows 11, Python 3.12, rustc 1.85"
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction Steps & Error Output
+      description: Please strip any local usernames, file paths, or proprietary plugin names before pasting logs.
+    validations:
+      required: true

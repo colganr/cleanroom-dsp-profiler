@@ -1,0 +1,23 @@
+{
+  "target_name": "Example Overdrive Pedal Profile",
+  "category": "overdrive_pedal",
+  "sample_rate": 48000,
+  "backend": {
+    "type": "macos_au",
+    "component_type": "aufx",
+    "component_subtype": "XXXX",
+    "component_manufacturer": "YYYY"
+  },
+  "pedal_controls": {
+    "drive_pid": 1,
+    "tone_pid": 2,
+    "level_pid": 3,
+    "mix_pid": null,
+    "subtract_dry_feedback_topology": true
+  },
+  "nonlinear_core": {
+    "architecture": "pedal_126ch_3pole_kone",
+    "fir_len": 256,
+    "gain_brackets": [0.0, 0.15, 0.3, 0.45, 0.55, 0.65, 0.75, 0.85, 1.0]
+  }
+}

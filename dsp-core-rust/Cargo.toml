@@ -1,0 +1,17 @@
+[package]
+name = "cleanroom-dsp"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Clean-room, zero-allocation Pure-Rust DSP core for Wiener-Hammerstein + Bloom + Sag + 96 kHz KONE amp, overdrive, and cabinet modeling."
+repository = "https://github.com/colganr/cleanroom-dsp-profiler"
+
+[lib]
+name = "cleanroom_dsp"
+crate-type = ["rlib", "cdylib"]
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+panic = "abort"

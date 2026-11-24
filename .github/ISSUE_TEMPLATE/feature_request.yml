@@ -1,0 +1,25 @@
+name: Feature or Host Backend Request
+description: Propose a new plugin host backend (e.g., VST3/CLAP), workflow feature, or CLI enhancement.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or Use Case
+      description: What workflow or platform gap does this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Design
+      description: Describe the API, backend interface, or workflow behavior you'd like to see.
+    validations:
+      required: true
+  - type: checkboxes
+    id: pr_ready
+    attributes:
+      label: Contribution Interest
+      options:
+        - label: I would like to submit a Pull Request for this feature

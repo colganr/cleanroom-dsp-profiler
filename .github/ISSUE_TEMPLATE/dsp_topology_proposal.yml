@@ -1,0 +1,19 @@
+name: DSP Topology / Accuracy Proposal
+description: Propose a new clean-room circuit topology (fuzz, optical comp, spring tank, modulation) or accuracy improvement.
+title: "[DSP]: "
+labels: ["dsp", "enhancement"]
+body:
+  - type: textarea
+    id: physics
+    attributes:
+      label: Circuit Physics & Mathematical Formulation
+      description: Explain the physical phenomenon (e.g. bias shift, sag recovery, optical attack/release) and clean-room formulation.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Held-Out Validation Plan
+      description: How should this be benchmarked on synthetic targets without test-set leakage?
+    validations:
+      required: true

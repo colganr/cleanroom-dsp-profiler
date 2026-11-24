@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  audit-privacy-and-cleanroom:
+    name: Privacy & Clean-Room Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run public release & PII audit
+        run: python3 scripts/audit_public_release.py --check-git-log
+
+  rust-and-python-suite:
+    name: Rust DSP & Python Parity (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Format & Clippy checks
+        working-directory: dsp-core-rust
+        run: |
+          cargo fmt --check
+          cargo clippy --all-targets -- -D warnings
+
+      - name: Build & test Pure-Rust DSP crate (release + cdylib)
+        working-directory: dsp-core-rust
+        run: |
+          cargo test --release
+          cargo build --release
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python profiler & test dependencies
+        working-directory: profiler
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run Python unit, synthetic accuracy & Rust bit-exact parity tests
+        working-directory: profiler
+        run: pytest -v

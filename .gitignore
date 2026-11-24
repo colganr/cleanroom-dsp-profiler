@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+dist/
+build/
+
+# Rust
+target/
+Cargo.lock
+**/*.rs.bk
+
+# Profiling outputs, captures & user audio
+captures/
+*.wav
+*.nam
+*.npz
+*.dylib
+*.so
+*.dll
+!dsp-core-rust/assets/*.bin
+
+# OS & Editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+.env
+.env.*

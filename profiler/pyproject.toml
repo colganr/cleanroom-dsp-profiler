@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cleanroom-dsp-profiler"
+version = "0.1.0"
+description = "Clean-room black-box audio DSP profiling engine (Wiener-Hammerstein + Bloom + Sag + 96 kHz KONE + NAM v0.5.4 export)."
+readme = "../README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+]
+
+[project.scripts]
+cleanroom-profiler = "amp_profiler.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["amp_profiler*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

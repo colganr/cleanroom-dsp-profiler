@@ -1,0 +1,19 @@
+{
+  "target_name": "Example Multi-Mic Cabinet Grid",
+  "category": "speaker_cabinet",
+  "sample_rate": 48000,
+  "ir_len": 1024,
+  "quantization": "i16_plus_f32_peak",
+  "grid": {
+    "cab_pid": 10,
+    "mic_pid": 11,
+    "pos_pid": 12,
+    "dist_pid": 13,
+    "angle_pid": 14,
+    "cab_values": [0.0, 1.0],
+    "mic_values": [0.0, 1.0, 2.0],
+    "pos_knots": [0.0, 0.5, 1.0],
+    "dist_knots": [0.0, 1.0],
+    "angle_knots": [0.0, 1.0]
+  }
+}
