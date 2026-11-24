@@ -6,7 +6,6 @@ build-backend = "setuptools.build_meta"
 name = "cleanroom-dsp-profiler"
 version = "0.1.0"
 description = "Clean-room black-box audio DSP profiling engine (Wiener-Hammerstein + Bloom + Sag + 96 kHz KONE + NAM v0.5.4 export)."
-readme = "../README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
 dependencies = [
