@@ -6,6 +6,7 @@ Subcommands:
   - `export-stimulus` : Write the 15s Zero-Leakage Composite Stimulus (24-bit WAV) for DAW/hardware re-amping.
   - `profile-wav-pair`: Profile ANY VST3/CLAP/AAX plugin or hardware rig on Windows/macOS/Linux from a WAV pair.
   - `demo`            : Run end-to-end clean-room synthetic Amp + Overdrive capture, Rust export & held-out null test.
+  - `demo-fx`         : Run all 5 clean-room synthetic Time-Based, Modulation & Dynamics FX profilers.
 """
 
 from __future__ import annotations

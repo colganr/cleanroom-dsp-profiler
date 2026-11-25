@@ -1,6 +1,6 @@
 # End-to-End Profiling-to-Plugin Workflow (`WORKFLOW.md`)
 
-This workflow takes you (or your AI coding agent) from a target amplifier, overdrive pedal, or speaker cabinet to a **verified, zero-allocation Pure-Rust DSP engine** achieving `>99%` held-out waveform correlation across interactive controls.
+This workflow takes you (or your AI coding agent) from a target amplifier, overdrive pedal, speaker cabinet, or time-based / modulation / dynamics effect to a **verified, zero-allocation Pure-Rust DSP engine** achieving `>99%` held-out waveform correlation across interactive controls.
 
 ---
 
