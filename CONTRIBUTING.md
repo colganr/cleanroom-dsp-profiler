@@ -25,8 +25,8 @@ We especially welcome PRs in these areas:
    - Live Hardware Re-Amping driver (automatic loopback latency measurement + level calibration over ASIO / CoreAudio / PipeWire)
 2. **New Nonlinear & Time-Variant DSP Topologies:**
    - Germanium / silicon fuzz circuits (input impedance loading + gating/starve sag)
-   - Optical / FET / VCA compressor profiling (attack/release envelope dynamics)
-   - Spring / plate reverb multi-basis parameterization & modulation (LFO chorus/tremolo/vibrato)
+   - Optical / FET program-dependent compressor profiling (photocell memory & multi-stage release)
+   - BBD chorus / flanger FM depth profiling, multi-stage analog phasers, and algorithmic FDN reverbs
 3. **Solver & Performance Enhancements:**
    - Accelerated multi-threaded / GPU / Apple Accelerate ridge Cholesky solvers
    - Automated hyper-parameter sweeps for bloom knee / sag time-constant adaptation

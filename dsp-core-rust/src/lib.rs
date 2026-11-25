@@ -1,7 +1,8 @@
 //! Clean-Room Pure-Rust Audio DSP Core (`cleanroom-dsp`).
 //!
 //! Provides zero-allocation building blocks for high-accuracy black-box profiled guitar
-//! amplifiers, overdrive pedals, and multi-microphone speaker cabinets:
+//! amplifiers, overdrive pedals, multi-microphone speaker cabinets, and time-based,
+//! modulation, and dynamics effects:
 //!
 //! - [`simd_ops`]: Hardware `DenormalGuard` (FTZ/DAZ), branchless `[7/6]` Padé `fast_tanh`,
 //!   and runtime-dispatched `AVX2+FMA` / `SSE2` / `NEON` FIR dot products.
@@ -13,6 +14,10 @@
 //!   3-stage invertible pole-zero tube/transformer spine.
 //! - [`pedal_core`]: 126-channel 3-pole zero-slope Wiener-Hammerstein overdrive engine.
 //! - [`cab_grid`]: Generic `ScalableCabEngine<const N_SLOTS: usize>` for 2D/3D quantized IR grids.
+//! - [`spring_reverb`]: 4-basis SVD Decay compression + 64-tap Wet Tone FIR (optional 4x 12 kHz tank).
+//! - [`delay_bbd`]: Hermite fractional delay + exact `loop_extra_delay` + 64-tap loop FIR + 30-ch BBD sat.
+//! - [`harmonic_trem`]: 128-tap dual-band SVD crossover + 21-pt LFO curves + optional 15-ch tube sat.
+//! - [`envelope_filter`]: Vactrol + Cytomic TPT 2-pole SVF envelope filter & soft-knee studio compressor.
 //! - [`nam_capture`]: Calibrated `12,288`-sample conditioning stimulus for `.nam` WaveNet export.
 //!
 //! Also exposes a clean C ABI (`#[no_mangle] pub extern "C"`) so the exact compiled Rust DSP
