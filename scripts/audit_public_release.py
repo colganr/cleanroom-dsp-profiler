@@ -171,7 +171,7 @@ def audit_git_log(root: Path, extra_terms: list[str]) -> list[str]:
         return errors
 
     email_rx = re.compile(
-        r"<([A-Za-z0-9._%+-]+@(?!users\.noreply\.github\.com>|example\.com>)[A-Za-z0-9.-]+\.[A-Za-z]{2,})>"
+        r"<(?!noreply@github\.com>)([A-Za-z0-9._%+-]+@(?!users\.noreply\.github\.com>|example\.com>)[A-Za-z0-9.-]+\.[A-Za-z]{2,})>"
     )
     extra_regexes = [(t, re.compile(re.escape(t), re.IGNORECASE)) for t in extra_terms]
 
