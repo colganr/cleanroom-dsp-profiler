@@ -84,6 +84,13 @@ class RustDspBridge:
         ]
         self.lib.cleanroom_render_pedal_engine.restype = ctypes.c_int
 
+        self.lib.cleanroom_eval_envelope_filter.argtypes = [
+            _FP, ctypes.c_size_t, ctypes.c_float,
+            ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_int,
+            _FP, _FP,
+        ]
+        self.lib.cleanroom_eval_envelope_filter.restype = ctypes.c_int
+
     def eval_amp_features(
         self,
         u_in: np.ndarray,
@@ -172,6 +179,31 @@ class RustDspBridge:
         )
         if rc != 0:
             raise RuntimeError(f"cleanroom_render_pedal_engine failed with code {rc}")
+        return y
+
+    def eval_envelope_filter(
+        self,
+        x_in: np.ndarray,
+        params_14: np.ndarray,
+        sr: float = 48_000.0,
+        drive_knob: float = 0.60,
+        peak_q_scale: float = 1.0,
+        slow_mult: float = 1.0,
+        sweep_down: bool = False,
+    ) -> np.ndarray:
+        x = np.ascontiguousarray(x_in, dtype=np.float32)
+        p = np.ascontiguousarray(params_14, dtype=np.float32)
+        if len(p) != 14:
+            raise ValueError(f"Expected 14 envelope filter params, got {len(p)}")
+        y = np.zeros(len(x), dtype=np.float32)
+        rc = self.lib.cleanroom_eval_envelope_filter(
+            x.ctypes.data_as(_FP), len(x), float(sr),
+            float(drive_knob), float(peak_q_scale), float(slow_mult),
+            1 if sweep_down else 0,
+            p.ctypes.data_as(_FP), y.ctypes.data_as(_FP),
+        )
+        if rc != 0:
+            raise RuntimeError(f"cleanroom_eval_envelope_filter failed with code {rc}")
         return y
 
 

@@ -11,6 +11,12 @@ This workflow takes you (or your AI coding agent) from a target amplifier, overd
 | **A. Guitar / Bass Amplifier Head** | Wiener–Hammerstein `H_pre` (`1024`-tap) → **180-Ch Bloom + Sag + 96 kHz KONE** (+ optional 3-Stage Invertible Tube Spine) → `H_post` (`64`-tap) | **macOS Live AU** (full multi-knob/switch sweeps) OR **Cross-Platform WAV-Pair** (per-setting captures on Windows/macOS/Linux/Hardware) |
 | **B. Overdrive / Boost Stompbox** | `H_pre` (`256`-tap `Drive`) → **126-Ch 3-Pole + 96 kHz KONE** across `9` Gain brackets → `H_post` (`256`-tap `Tone`) → `Level` → `12 Hz` DC Block | Live AU or Cross-Platform WAV-Pair |
 | **C. Speaker Cabinet (2D / 3D Multi-Mic)** | `ScalableCabEngine<const N_SLOTS: usize>` (`1024`-tap `i16 + f32` quantized grid, bilinear/trilinear interpolation) | Live AU grid sweep or exported IR WAV folder |
+| **D. Spring / Plate / Hall / Room Reverb** | `SpringReverbEngine` (`4`-basis SVD Decay compression + `64`-tap causal Toeplitz Wet Tone FIR + optional `4×` decimated `12 kHz` mode) | `profile_reverb_svd()` (`time_mod_fx.py`) |
+| **E. Analog BBD & Digital Delay** | `DelayBbdEngine` (Hermite delay line + hidden `loop_extra_delay` + Toeplitz Hardness/BBD FIR + `30`-ch BBD bucket-rail saturation) | `profile_delay_bbd()` + `fit_bbd_30ch_saturation()` |
+| **F. Harmonic / Optical Tremolo & Mod** | `HarmonicTremoloEngine` (carrier-demod LFO speed + impulse-train SVD dual crossover FIRs + phase-locked `Intensity=0` saturation) | `profile_harmonic_tremolo()` |
+| **G. Envelope Filter & Compressor / EQ** | `EnvelopeFilterEngine` (Vactrol + TPT 2-pole SVF) & `StudioCompressorEngine` (soft-knee static + attack/release ballistics) | `profile_envelope_filter()` & `profile_compressor()` |
+
+*(For detailed step-by-step capture protocols for Categories D–G, see [`skill/cleanroom-dsp-profiler/references/time-mod-dynamics-fx.md`](skill/cleanroom-dsp-profiler/references/time-mod-dynamics-fx.md) or run `cleanroom-profiler demo-fx`.)*
 
 ---
 

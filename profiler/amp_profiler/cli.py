@@ -258,6 +258,52 @@ def cmd_demo(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_demo_fx(_args: argparse.Namespace) -> int:
+    """Runs all 5 clean-room synthetic Time-Based, Modulation & Dynamics FX profilers."""
+    from .backends.synthetic_fx import (
+        SyntheticBbdDelayBackend,
+        SyntheticCompressorBackend,
+        SyntheticEnvelopeFilterBackend,
+        SyntheticHarmonicTremoloBackend,
+        SyntheticSpringReverbBackend,
+    )
+    from .stimulus import generate_procedural_guitar_di
+    from .time_mod_fx import (
+        fit_bbd_30ch_saturation,
+        profile_compressor,
+        profile_delay_bbd,
+        profile_envelope_filter,
+        profile_harmonic_tremolo,
+        profile_reverb_svd,
+    )
+
+    print("=== Clean-Room Time-Based, Modulation & Dynamics FX Profiler Demo ===\n")
+
+    rev = SyntheticSpringReverbBackend(sr=SR_DEFAULT, onset_latency=16)
+    r_rev = profile_reverb_svd(rev, rev.PID_DECAY, rev.PID_TONE, rev.PID_MIX, onset=16, ir_len=8192, n_steps=9)
+    print(f"[1/5] Spring Reverb SVD (4-basis)   : min_corr={r_rev['svd_min_corr_pct']:.2f}%, tone_min_corr={r_rev['tone_min_corr_pct']:.2f}%")
+
+    trem = SyntheticHarmonicTremoloBackend(sr=SR_DEFAULT, onset_latency=8)
+    r_tr = profile_harmonic_tremolo(trem, trem.PID_SPEED, trem.PID_INTENSITY, onset=8, n_steps=5)
+    print(f"[2/5] Harmonic Tremolo (SVD + FFT)  : 2-basis_energy={r_tr['svd_2basis_energy_pct']:.3f}%, LFO_Hz={[round(float(x), 2) for x in r_tr['freq_hz']]}")
+
+    dly = SyntheticBbdDelayBackend(sr=SR_DEFAULT, onset_latency=12, loop_extra_delay=24)
+    r_dly = profile_delay_bbd(dly, dly.PID_TIME, dly.PID_FEEDBACK, dly.PID_MIX, dly.PID_TONE, onset=12, n_steps=5)
+    u_sat = generate_procedural_guitar_di(duration_s=1.0, sr=SR_DEFAULT, peak=0.45)
+    _, bbd_corr = fit_bbd_30ch_saturation(u_sat, (0.28 * np.tanh(u_sat / 0.28)).astype(np.float32))
+    print(f"[3/5] Analog BBD Delay              : extra_loop_delay={r_dly['loop_extra_delay']} samples, loop_FIR_corr={r_dly['loop_min_corr_pct']:.2f}%, BBD_sat_corr={bbd_corr:.2f}%")
+
+    ef = SyntheticEnvelopeFilterBackend(sr=SR_DEFAULT, onset_latency=8)
+    cal_di = generate_procedural_guitar_di(duration_s=1.2, sr=SR_DEFAULT, peak=0.22, seed=99)
+    r_ef = profile_envelope_filter(ef, ef.PID_DRIVE, ef.PID_PEAK, cal_di, onset=8, n_q_steps=5, n_rounds=4)
+    print(f"[4/5] Vactrol+SVF Envelope Filter   : 3-corner_mean_corr={r_ef['fit_mean_corr_pct']:.2f}%")
+
+    comp = SyntheticCompressorBackend(sr=SR_DEFAULT, threshold_db=-20.0, ratio=4.0, knee_db=6.0, attack_ms=12.0, release_ms=110.0, makeup_db=4.5)
+    r_cmp = profile_compressor(comp, onset=0, sr=SR_DEFAULT)
+    print(f"[5/5] Soft-Knee Studio Compressor   : thresh={r_cmp['threshold_db']} dB, ratio={r_cmp['ratio']}:1, knee={r_cmp['knee_db']} dB, atk={r_cmp['attack_ms']} ms, rel={r_cmp['release_ms']} ms, makeup={r_cmp['makeup_db']} dB")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="cleanroom-profiler",
@@ -292,6 +338,9 @@ def main(argv: list[str] | None = None) -> int:
     p_demo = sub.add_parser("demo", help="Run built-in clean-room synthetic Amp + Overdrive capture & verification demo")
     p_demo.add_argument("--out-dir", default=None, help="Optional directory to write exported Rust weights & .nam")
     p_demo.set_defaults(func=cmd_demo)
+
+    p_dfx = sub.add_parser("demo-fx", help="Run built-in synthetic Spring Reverb, BBD Delay, Harmonic Tremolo, Envelope Filter & Compressor demos")
+    p_dfx.set_defaults(func=cmd_demo_fx)
 
     args = parser.parse_args(argv)
     return int(args.func(args))
