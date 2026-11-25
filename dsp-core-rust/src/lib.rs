@@ -22,10 +22,14 @@
 pub mod amp_core;
 pub mod cab_grid;
 pub mod cepstral_fir;
+pub mod delay_bbd;
+pub mod envelope_filter;
+pub mod harmonic_trem;
 pub mod nam_capture;
 pub mod pedal_core;
 pub mod reservoir;
 pub mod simd_ops;
+pub mod spring_reverb;
 
 use amp_core::{
     eval_amp_core_sample, eval_amp_features_sample, AmpCoreConfig, AmpCoreState, AMP_CHANNELS,
@@ -399,6 +403,62 @@ pub unsafe extern "C" fn cleanroom_render_pedal_engine(
     0
 }
 
+/// Evaluates a 14-parameter Vactrol + TPT 2-Pole SVF Envelope Filter across `n` samples.
+///
+/// `params_14` order: `[f_hp_sc, f_lp_sc, sens_0, sens_exp, tau_atk_s, tau_rel_s, tau_opt_s,
+/// cv_pow, f_min_hz, f_max_hz, q_base, q_cv, gain_base, bp_mix]`.
+///
+/// # Safety
+/// - `x_in` and `y_out` must point to `n` valid `f32` elements.
+/// - `params_14` must point to `14` readable `f32` elements.
+#[no_mangle]
+pub unsafe extern "C" fn cleanroom_eval_envelope_filter(
+    x_in: *const f32,
+    n: usize,
+    sr: f32,
+    drive_knob: f32,
+    peak_q_scale: f32,
+    slow_mult: f32,
+    sweep_down: i32,
+    params_14: *const f32,
+    y_out: *mut f32,
+) -> i32 {
+    if x_in.is_null() || params_14.is_null() || y_out.is_null() || n == 0 {
+        return -1;
+    }
+    let _guard = DenormalGuard::new();
+    let xs = slice::from_raw_parts(x_in, n);
+    let ys = slice::from_raw_parts_mut(y_out, n);
+    let p = slice::from_raw_parts(params_14, 14);
+
+    let mut eng = envelope_filter::EnvelopeFilterEngine::new(sr);
+    eng.drive_knob = drive_knob;
+    eng.peak_q_scale = peak_q_scale;
+    eng.slow_mult = slow_mult;
+    eng.params = envelope_filter::EnvelopeFilterParams {
+        f_hp_sc: p[0],
+        f_lp_sc: p[1],
+        sens_0: p[2],
+        sens_exp: p[3],
+        tau_atk_s: p[4],
+        tau_rel_s: p[5],
+        tau_opt_s: p[6],
+        cv_pow: p[7],
+        f_min_hz: p[8],
+        f_max_hz: p[9],
+        q_base: p[10],
+        q_cv: p[11],
+        gain_base: p[12],
+        bp_mix: p[13],
+        sweep_down: sweep_down != 0,
+    };
+
+    for i in 0..n {
+        ys[i] = eng.process_sample(xs[i]);
+    }
+    0
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -537,5 +597,45 @@ mod tests {
         rig.process_mono_to_stereo(&inp, &mut out_l, &mut out_r);
         assert!(out_l.iter().all(|v| v.is_finite()));
         assert!(out_r.iter().all(|v| v.is_finite()));
+    }
+
+    #[test]
+    fn test_time_mod_dynamics_engines_zero_nan() {
+        use crate::delay_bbd::DelayBbdEngine;
+        use crate::envelope_filter::{EnvelopeFilterEngine, StudioCompressorEngine};
+        use crate::harmonic_trem::HarmonicTremoloEngine;
+        use crate::spring_reverb::SpringReverbEngine;
+
+        let mut rev = SpringReverbEngine::new(256, true);
+        let mut dly = DelayBbdEngine::new(48_000.0, 500.0);
+        dly.delay_samples = 240.0;
+        dly.loop_extra_delay = 16;
+        dly.bbd_sat_enabled = true;
+        let mut trem = HarmonicTremoloEngine::new(48_000.0);
+        trem.c0_mean = 0.7;
+        trem.c0_amp = 0.3;
+        trem.tube_sat_enabled = true;
+        let mut envf = EnvelopeFilterEngine::new(48_000.0);
+        let mut comp = StudioCompressorEngine::new(48_000.0);
+
+        // Verify soft-knee static compressor curve monotonicity
+        assert!(comp.static_gain_reduction_db(-40.0).abs() < 1e-6);
+        assert!(comp.static_gain_reduction_db(0.0) < -10.0);
+
+        for n in 0..2048 {
+            let x = 0.25 * ((n as f32) * 0.04).sin();
+            let y1 = rev.process_sample(x);
+            let y2 = dly.process_sample(x);
+            let y3 = trem.process_sample(x);
+            let y4 = envf.process_sample(x);
+            let y5 = comp.process_sample(x);
+            assert!(
+                y1.is_finite()
+                    && y2.is_finite()
+                    && y3.is_finite()
+                    && y4.is_finite()
+                    && y5.is_finite()
+            );
+        }
     }
 }

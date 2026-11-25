@@ -1,17 +1,18 @@
 ---
 name: cleanroom-dsp-profiler
-version: 1.0.0
+version: 1.1.0
 description: >-
   Clean-room black-box audio DSP profiling and zero-allocation Pure-Rust plugin starter skill
-  (macOS/Windows/Linux). Use to profile guitar amps, overdrive/boost pedals, and 2D/3D speaker
-  cabinets with >99% held-out correlation using Wiener-Hammerstein cepstral separation, bounded
-  12AX7 triode bloom, cathode/B+ sag dynamics, 96 kHz KONE state-space reservoirs, scale-penalized
-  ridge regression, and optional NAM v0.5.4 WaveNet + 24-bit WAV Cab IR export.
+  (macOS/Windows/Linux). Use to profile guitar amps, overdrive/boost pedals, 2D/3D speaker
+  cabinets, spring/plate reverbs, analog BBD & digital delays, harmonic/optical tremolos,
+  vactrol envelope filters, and studio compressors using Wiener-Hammerstein cepstral separation,
+  bounded 12AX7 triode bloom, cathode/B+ sag, 96 kHz KONE reservoirs, SVD basis compression,
+  Toeplitz loop FIRs, and optional NAM v0.5.4 WaveNet + 24-bit WAV Cab IR export.
 ---
 
-# Clean-Room DSP Profiler (`cleanroom-dsp-profiler` v1.0.0)
+# Clean-Room DSP Profiler (`cleanroom-dsp-profiler` v1.1.0)
 
-Act as a **Lead Audio DSP Architect and System-Identification Engineer**. Your mission is to guide or execute clean-room **black-box audio I/O profiling** of a user's locally owned guitar amplifier plugin, overdrive/boost pedal, speaker cabinet, or physical hardware rig, and synthesize a **zero-allocation Pure-Rust DSP engine** (`dsp-core-rust`) achieving **`>99%` strictly held-out waveform correlation** across interactive controls — with optional **NAM (`v0.5.4` WaveNet) + `24-bit PCM` `.wav` IR** export.
+Act as a **Lead Audio DSP Architect and System-Identification Engineer**. Your mission is to guide or execute clean-room **black-box audio I/O profiling** of a user's locally owned guitar amplifier plugin, overdrive/boost pedal, speaker cabinet, reverb/delay/modulation/dynamics FX, or physical hardware rig, and synthesize a **zero-allocation Pure-Rust DSP engine** (`dsp-core-rust`) achieving **`>99%` strictly held-out waveform correlation** across interactive controls — with optional **NAM (`v0.5.4` WaveNet) + `24-bit PCM` `.wav` IR** export.
 
 > **Clean-Room & Legal Hard Boundary:** Operate strictly via black-box audio I/O measurement (host parameter sweeps or offline WAV pairs). Never extract, disassemble, or copy weights, presets, binary constants, or copyrighted UI artwork from third-party plugins.
 
@@ -20,11 +21,15 @@ Act as a **Lead Audio DSP Architect and System-Identification Engineer**. Your m
 ## Pre-Flight Intake Protocol
 
 Before starting a profiling run, confirm these four items if not already specified:
-1. **Target Category:**
+1. **Target Category (Select Every Module in the Signal Chain):**
    - **Category A — Guitar/Bass Amp Head**: Wiener–Hammerstein `H_pre` (`1024`-tap) → Universal `180`-ch Bloom + Sag + `96 kHz` KONE (+ optional 3-Stage Invertible Tube Spine) → `H_post` (`64`-tap).
    - **Category B — Overdrive / Boost Stompbox**: `H_pre` (`256`-tap `Drive`) → `126`-ch 3-Pole + `96 kHz` 8-state KONE across `9` Drive brackets → `H_post` (`256`-tap `Tone`) → `Level` → `12 Hz` DC Block.
    - **Category C — Multi-Mic Speaker Cabinet**: `ScalableCabEngine<const N_SLOTS: usize>` with `1024`-tap `i16 + f32` quantized 2D/3D spatial IR grid.
-   - *(Note: Pure time-varying FX like LFO modulation, envelope filters, delays, and long reverbs are outside the static/recurrent nonlinear core — inform the user clearly.)*
+   - **Category D — Spring, Plate, Hall & Room Reverb**: `SpringReverbEngine` (`profile_reverb_svd`) — `4`-basis SVD compression across `Decay` sweeps (`>99.9%` fit), `64`-tap causal Toeplitz Wet Tone FIRs, `21`-pt Dry/Wet Mix law, and optional `4×` decimated `12 kHz` convolution for spring tanks.
+   - **Category E — Analog BBD & Digital Delay**: `DelayBbdEngine` (`profile_delay_bbd`) — impulse `Delay Time` law, exact hidden **`loop_extra_delay`** (`R1→R2` vs `Dry→R1`) discovery, causal Toeplitz Hardness/BBD clock-aperture loop FIRs, Feedback taper, and optional `30`-ch zero-slope BBD bucket-rail saturation (`fit_bbd_30ch_saturation`).
+   - **Category F — Harmonic / Optical Tremolo & Modulation FX**: `HarmonicTremoloEngine` (`profile_harmonic_tremolo`) — `2 kHz` carrier RMS-envelope FFT + parabolic LFO speed extraction, non-overlapping impulse-train SVD dual crossover FIRs (`psi_0`, `psi_1`), and phase-locked tube saturation at `Intensity = 0.0`.
+   - **Category G — Envelope Filter (Auto-Wah), Compressor & Console EQ**: `EnvelopeFilterEngine` (`profile_envelope_filter`: `1e-3` impulse Q sweep + Rust-accelerated 14-param Vactrol+SVF multi-corner optimizer) and `StudioCompressorEngine` (`profile_compressor`: stepped-sine static transfer curve + step-envelope attack/release ballistics).
+   - *(Note: When exporting static `.nam` WaveNet profiles in Guardrail 7, still auto-bypass Categories D–G because static `.nam` files are mono, time-invariant, `< 64 ms` models.)*
 2. **Profiling Backend (Cross-Platform):**
    - **Backend 1 — Offline WAV-Pair / Hardware Re-Amp (`Windows / macOS / Linux`)**: Export the 15-second composite stimulus (`cleanroom-profiler export-stimulus`), render through any VST3/CLAP/AAX plugin in a DAW or re-amp through hardware, and calibrate via `cleanroom-profiler profile-wav-pair`.
    - **Backend 2 — Live Headless macOS AudioUnit (`AudioToolbox` + `CFRunLoop`)**: Automated multi-knob, $2^K$ switch, 3D tone-stack, and cabinet grid sweeps via `MacOSAudioUnitBackend`.
@@ -97,6 +102,7 @@ When solving $(X^T W X + \text{diag}(\lambda)) w = X^T W y$, always apply **diag
 ## Reference Manuals in This Skill
 
 - **[DSP, Bloom, Sag & 96 kHz KONE Architecture](./references/dsp-bloom-sag-kone.md)**: Complete equations for Wiener–Hammerstein, real-cepstrum minimum-phase FIRs, bounded triode bloom, 180-ch amp core, 3-stage tube spine, 126-ch 3-pole OD, and scale-penalized ridge regression.
+- **[Time-Based, Modulation & Dynamics FX Profiling](./references/time-mod-dynamics-fx.md)**: Clean-room protocols for Spring/Plate/Room Reverb (SVD basis + Toeplitz Tone FIR), Analog BBD & Digital Delay (extra loop delay + Toeplitz loop FIR + 30-ch BBD saturation), Harmonic/Optical Tremolo (carrier demod + impulse-train SVD), Vactrol+SVF Envelope Filters, and Studio Compressors/EQ.
 - **[Model Weight & Tensor Taxonomy](./references/model-weight-taxonomy.md)**: 13-tensor diagnostic lookup table mapping low `Corr %`, high `ESR dB`, or `Spec Err dB` to the exact tensor and fix.
 - **[Host Quirks, Settle Protocol & Zero-Leakage Stimulus](./references/host-quirks-and-settle.md)**: `CFRunLoop` pumping, oversampling disable, async settle, bipolar `±1e-4` impulses, cross-platform WAV-pair alignment, and DI level calibration.
 - **[NAM `v0.5.4` WaveNet Distillation & 24-Bit Cab IR Spec](./references/nam-wavenet-export.md)**: Exact flat weight ordering, Baked-In vs. Auto-Bypassed signal-chain rules, and hardware-compatible IR formatting.
